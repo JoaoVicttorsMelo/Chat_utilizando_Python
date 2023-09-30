@@ -7,10 +7,43 @@ def main(pagina):
     nome_usuario = ft.TextField(label='Escreva seu nome')
 
     campo_mensagem = ft.TextField(label='Escreva sua mensagem')
-    botao_enviar_mensagem = ft.ElevatedButton('Enviar Mansagem')
 
-    chat =ft.Column()
+    chat = ft.Column()
+
+    def enviar_mensagem_tunel(mensagem):
+        tipo = mensagem["tipo"]
+        if tipo == "mensagem":
+            texto_mensagem = mensagem["texto"]
+            usuario_mensagem = mensagem["usuario"]
+            chat.controls.append(ft.Text(f"{usuario_mensagem}: {texto_mensagem}"))
+        else:
+            usuario_mensagem = mensagem["usuario"]
+            chat.controls.append(ft.Text(f"{usuario_mensagem} entrou no chat",
+                                 size=12, italic=True, color =ft.colors.BLUE_500))
+
+
+
+        campo_mensagem.value = ""
+        pagina.update()
+
+
+    pagina.pubsub.subscribe(enviar_mensagem_tunel)
+
+    def enviar_mensagem(e):
+
+        pagina.pubsub.send_all({"texto": campo_mensagem.value,
+                                "usuario": nome_usuario.value,
+                                "tipo": "mensagem"})
+
+        campo_mensagem.value = ""
+
+        pagina.update()
+
+    botao_enviar_mensagem = ft.ElevatedButton('Enviar Mansagem', on_click=enviar_mensagem)
+
+
     def entrar_popup(e):
+        pagina.pubsub.send_all({"usuario": nome_usuario.value, "tipo": "entrada"})
         pagina.add(chat)
         popup.open = False
         pagina.remove(texto)
@@ -33,11 +66,5 @@ def main(pagina):
     pagina.add(botao_iniciar)
 
 
-
-
-
-
-
-
-ft.app(target=main, view=ft.WEB_BROWSER)
+ft.app(target=main, view=ft.WEB_BROWSER, port=8000)
 
